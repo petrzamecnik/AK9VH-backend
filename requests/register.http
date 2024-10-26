@@ -1,5 +1,9 @@
-### GET request to example server
-GET https://examples.http-client.intellij.net/get$END$
-    ?generated-in=IntelliJ IDEA
+### POST request to register a user
+POST http://localhost:3000/api/users/register
+Content-Type: application/json
 
-###
+{
+  "username": "testuser",
+  "email": "testuser@example.com",
+  "password": "password123"
+}

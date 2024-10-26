@@ -1,18 +1,22 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
+import dotenv from 'dotenv';
+import { connectDB } from './config/database';
+import userRoutes from './routes/userRoutes';
 
-// Initialize Express
+dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware to parse JSON requests
+// Middleware
 app.use(express.json());
 
-// Basic route for testing
-app.get('/', (req: Request, res: Response) => {
-    res.send('Hello, World!');
-});
+// Connect to the database
+connectDB();
 
-// Start the server
+// Routes
+app.use('/api/users', userRoutes);
+
+// Start server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });
