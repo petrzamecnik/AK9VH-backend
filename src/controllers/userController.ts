@@ -1,28 +1,31 @@
-import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
-import { pool } from '../config/database';
+import {Request, Response} from 'express';
+import {pool} from '@config/database';
+import {User} from '@models/UserModel';
+import {hashPassword} from "@utils/hashPassword";
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
-    const { username, email, password } = req.body;
+    const {username, email, password} = req.body;
 
     if (!username || !email || !password) {
-        res.status(400).json({ message: 'All fields are required' });
+        res.status(400).json({message: 'All fields are required'});
         return;
     }
 
     try {
         // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = hashPassword(password)
 
         // Insert user into the database
-        const result = await pool.query(
-            'INSERT INTO users (username, email, password, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id',
+        const result = await pool.query<User>(
+            'INSERT INTO users (username, email, password, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *',
             [username, email, hashedPassword]
         );
 
-        res.status(201).json({ message: 'User registered', userId: result.rows[0].id });
+        const newUser: User = result.rows[0];
+
+        res.status(201).json({message: 'User registered', userId: newUser.id});
     } catch (error) {
         console.error('Registration error:', error);  // Log error details
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({message: 'Server error'});
     }
 };
