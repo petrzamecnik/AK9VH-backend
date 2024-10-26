@@ -13,7 +13,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
     try {
         // Hash the password
-        const hashedPassword = hashPassword(password)
+        const hashedPassword = await hashPassword(password)
 
         // Insert user into the database
         const result = await pool.query<User>(
