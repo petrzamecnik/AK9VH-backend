@@ -1,7 +1,11 @@
 import {Request, Response} from 'express';
+import jwt from 'jsonwebtoken';
 import {pool} from '@config/database';
 import {User} from '@models/UserModel';
-import {hashPassword} from "@utils/hashPassword";
+import {hashPassword, isPasswordValid} from "@utils/passwordUtils";
+import * as process from "node:process";
+import * as console from "node:console";
+
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
     const {username, email, password} = req.body;
@@ -26,6 +30,57 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
         res.status(201).json({message: 'User registered', userId: newUser.id});
     } catch (error) {
         console.error('Registration error:', error);  // Log error details
+        res.status(500).json({message: 'Server error'});
+    }
+};
+
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
+    const {username, password} = req.body;
+
+    console.log(username);
+    console.log(password);
+
+    if (!username || !password) {
+        res.status(400).json({message: 'Username and password are required'});
+    }
+
+    try {
+        const result = await pool.query<User>(
+            'SELECT * FROM users WHERE username = $1',
+            [username]
+        );
+
+        const user = result.rows[0];
+
+        // check password
+        const passwordCheck = await isPasswordValid(password, user.password);
+        if (!passwordCheck) {
+            res.status(400).json({message: 'Invalid email or password'});
+        }
+
+        // generate JWT
+        const token = jwt.sign(
+            {
+                userId: user.id,
+                username: user.username,
+                email: user.email
+            },
+            process.env.JWT_SECRET as string,
+            {expiresIn: '8h'}
+        );
+
+        // respond with token
+        res.status(200).json({
+            message: 'Login successful',
+            token,
+            user: {
+                userId: user.id,
+                username: user.username,
+                email: user.email
+            }
+        });
+    } catch (error) {
+        console.error('Login error: ', error);
         res.status(500).json({message: 'Server error'});
     }
 };
