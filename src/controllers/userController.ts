@@ -8,16 +8,16 @@ import * as console from "node:console";
 
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
-    const {username, email, password} = req.body;
+    const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
-        res.status(400).json({message: 'All fields are required'});
+        res.status(400).json({ message: 'All fields are required' });
         return;
     }
 
     try {
         // Hash the password
-        const hashedPassword = await hashPassword(password)
+        const hashedPassword = await hashPassword(password);
 
         // Insert user into the database
         const result = await pool.query<User>(
@@ -26,11 +26,16 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
         );
 
         const newUser: User = result.rows[0];
+        res.status(201).json({ message: 'User registered', userId: newUser.id });
 
-        res.status(201).json({message: 'User registered', userId: newUser.id});
     } catch (error) {
-        console.error('Registration error:', error);  // Log error details
-        res.status(500).json({message: 'Server error'});
+        console.error('Registration error:', error);
+
+        if ((error as any).code === '23505') {  // '23505' is the PostgreSQL unique violation error code
+            res.status(409).json({ message: 'User with this username already exists' });
+        } else {
+            res.status(500).json({ message: 'Server error' });
+        }
     }
 };
 
