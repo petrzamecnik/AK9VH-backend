@@ -52,7 +52,14 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
             [username]
         );
 
+
         const user = result.rows[0];
+        console.log('user: ', user);
+
+        if (!user) {
+            res.status(404).json({ message: 'Wrong username or password!' });
+        }
+
 
         // check password
         const passwordCheck = await isPasswordValid(password, user.password);
@@ -84,5 +91,69 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     } catch (error) {
         console.error('Login error: ', error);
         res.status(500).json({message: 'Server error'});
+    }
+};
+
+export const logoutUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader) {
+            res.status(401).json({ message: 'No token provided' });
+            return;
+        }
+
+        const token = authHeader.split(' ')[1]; // Remove 'Bearer ' prefix
+
+        // Optional: Store the token in a blacklist table
+        await pool.query(
+            `INSERT INTO blacklisted_tokens (token, expiry) 
+             VALUES ($1, NOW() + INTERVAL '8 hours')`,
+            [token]
+        );
+
+        res.status(200).json({ message: 'Logout successful' });
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const checkBlacklistedToken = async (req: Request, res: Response, next: Function) => {
+    try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader) {
+            res.status(401).json({ message: 'No token provided' });
+            return;
+        }
+
+        const token = authHeader.split(' ')[1];
+
+        // Check if token is blacklisted
+        const result = await pool.query(
+            'SELECT * FROM blacklisted_tokens WHERE token = $1',
+            [token]
+        );
+
+        if (result.rows.length > 0) {
+            res.status(401).json({ message: 'Token is invalid' });
+            return;
+        }
+
+        next();
+    } catch (error) {
+        console.error('Token check error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const cleanupBlacklistedTokens = async (): Promise<void> => {
+    try {
+        await pool.query(
+            'DELETE FROM blacklisted_tokens WHERE expiry < NOW()'
+        );
+    } catch (error) {
+        console.error('Cleanup error:', error);
     }
 };
