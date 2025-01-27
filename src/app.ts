@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import {connectDB} from '@config/database';
 import userRoutes from './routes/userRoutes';
+import gameRoutes from './routes/gameRoutes';
+
 
 dotenv.config();
 const app = express();
@@ -17,6 +19,7 @@ connectDB();
 
 // Routes
 app.use('/api/users', userRoutes);
+app.use('/api/games', gameRoutes);
 
 // Start server
 app.listen(PORT, () => {

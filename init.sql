@@ -17,3 +17,21 @@ CREATE TABLE IF NOT EXISTS blacklisted_tokens (
 
 CREATE INDEX IF NOT EXISTS idx_blacklisted_tokens_token ON blacklisted_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_blacklisted_tokens_expiry ON blacklisted_tokens(expiry);
+
+CREATE TABLE IF NOT EXISTS games
+(
+    id          SERIAL PRIMARY KEY,
+    title       VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+    image_url   TEXT,
+    price       VARCHAR(50),  -- You can use DECIMAL or NUMERIC for more precise prices
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO games (title, description, image_url, price)
+VALUES ('Epic Adventure', 'Embark on an epic journey through mystical lands.',
+        'https://dummyimage.com/400x300', 'Free'),
+       ('Space Explorers', 'Explore the galaxy and uncover its secrets.',
+        'https://dummyimage.com/400x300', 'Free'),
+       ('Mystery Island', 'Solve the mysteries of a remote island.',
+        'https://dummyimage.com/400x300', 'Free');
