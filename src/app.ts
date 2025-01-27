@@ -4,6 +4,8 @@ import cors from 'cors';
 import {connectDB} from '@config/database';
 import userRoutes from './routes/userRoutes';
 import gameRoutes from './routes/gameRoutes';
+import purchaseRoutes from './routes/purchaseRoute';
+
 
 
 dotenv.config();
@@ -20,6 +22,8 @@ connectDB();
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/games', gameRoutes);
+app.use('/api/purchases', purchaseRoutes);
+
 
 // Start server
 app.listen(PORT, () => {
